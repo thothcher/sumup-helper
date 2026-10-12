@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#101114">
+    <title>Sum-up Helper</title>
+    <meta name="description" content="JavaScript, React და Next.js შეჯამებები: ცხოვრებისეული მაგალითები, ცოცხალი დემოები და პრაქტიკა თამაშად.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23101114'/%3E%3Ccircle cx='7' cy='12' r='3' fill='%23e6c34a'/%3E%3Ccircle cx='12' cy='12' r='3' fill='%2358c4dc'/%3E%3Ccircle cx='17' cy='12' r='3' fill='%23ff2bd6'/%3E%3C/svg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600;700;800&family=Noto+Serif+Georgian:wght@700&family=Chakra+Petch:wght@600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #101114;
+            --text: #d9dbe2;
+            --muted: #9196a3;
+            --line: rgba(255, 255, 255, .08);
+            --font: "Noto Sans Georgian", system-ui, -apple-system, "Segoe UI", sans-serif;
+            --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+            --ease: cubic-bezier(.2, .7, .2, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(40% 35% at 12% 0%, rgba(230, 195, 74, .09), transparent 70%),
+                radial-gradient(40% 35% at 50% 0%, rgba(88, 196, 220, .08), transparent 70%),
+                radial-gradient(40% 35% at 88% 0%, rgba(255, 43, 214, .08), transparent 70%),
+                var(--bg);
+            color: var(--text);
+            font: 16px/1.6 var(--font);
+            overflow-x: hidden;
+        }
+        h1, h2, p { margin: 0; }
+        a { color: inherit; }
+        :focus-visible { outline: 2px solid #e6c34a; outline-offset: 3px; }
+
+        .wrap { max-width: 1160px; margin: 0 auto; padding: 0 16px; }
+
+        /* ---------- header ---------- */
+        .top { padding: 84px 0 40px; text-align: center; display: grid; justify-items: center; gap: 16px; }
+        .dots { display: flex; gap: 8px; }
+        .dots i { width: 12px; height: 12px; border-radius: 50%; }
+        .dots i:nth-child(1) { background: #e6c34a; }
+        .dots i:nth-child(2) { background: #58c4dc; }
+        .dots i:nth-child(3) { background: #ff2bd6; }
+        .top h1 { font-size: clamp(40px, 7vw, 72px); line-height: 1.05; font-weight: 800; letter-spacing: -.02em; color: #fff; }
+        .top p { max-width: 36em; color: var(--muted); font-size: 18px; }
+        .steps { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        .steps li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .03);
+            font-size: 14px;
+        }
+        .steps b { color: #fff; font-weight: 600; }
+
+        /* ---------- the three cards ---------- */
+        .path { position: relative; padding-bottom: 72px; }
+        .path__label { margin-bottom: 18px; color: var(--muted); font: 500 13px/1 var(--mono); text-align: center; }
+        .cards {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+            gap: 22px;
+        }
+        .cards > li { display: flex; }
+
+        .card {
+            position: relative;
+            isolation: isolate;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            min-height: 470px;
+            padding: 26px;
+            overflow: hidden;
+            border-radius: 22px;
+            text-decoration: none;
+            transition: transform .35s var(--ease), box-shadow .35s var(--ease);
+        }
+        .card:hover, .card:focus-visible { transform: translateY(-6px); }
+        .card__step { font: 500 12.5px/1 var(--mono); letter-spacing: .08em; opacity: .75; }
+        .card__mark {
+            width: 54px;
+            height: 54px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+        }
+        .card__mark svg { width: 30px; height: 30px; }
+        .card h2 { font-size: 32px; line-height: 1.1; }
+        .card__lead { font-size: 15px; opacity: .85; }
+        .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+        .chips li { padding: 3px 10px; border-radius: 999px; font: 500 12px/1.6 var(--mono); }
+        .card__meta { display: flex; flex-wrap: wrap; gap: 14px; margin-top: auto; font-size: 13.5px; opacity: .85; }
+        .card__meta span { display: inline-flex; align-items: center; gap: 6px; }
+        .card__meta svg { width: 15px; height: 15px; }
+        .card__go {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+        }
+        .card__go svg { width: 18px; height: 18px; transition: transform .3s var(--ease); }
+        .card:hover .card__go svg { transform: translateX(4px); }
+
+        /* JS: the forest */
+        .card--js {
+            color: #e3efe6;
+            background:
+                linear-gradient(180deg, rgba(8, 18, 12, .35), rgba(8, 18, 12, .92) 70%),
+                url("js/assets/seasons/autumn-small.jpg") center / cover;
+            box-shadow: 0 30px 60px -30px rgba(230, 195, 74, .35);
+        }
+        .card--js:hover { box-shadow: 0 40px 70px -30px rgba(230, 195, 74, .5); }
+        .card--js .card__mark { background: rgba(230, 195, 74, .16); color: #e6c34a; }
+        .card--js h2 { color: #fff; }
+        .card--js .chips li { background: rgba(143, 214, 162, .14); color: #b6e8c3; }
+        .card--js .card__go { background: #3b8b5a; color: #fff; }
+
+        /* React: the studio */
+        .card--react {
+            color: #3b404c;
+            background:
+                radial-gradient(circle, #d6d0c4 1px, transparent 1.3px) 0 0 / 20px 20px,
+                linear-gradient(160deg, #fbfaf6, #f1eee7);
+            box-shadow: 0 30px 60px -30px rgba(88, 196, 220, .45);
+        }
+        .card--react:hover { box-shadow: 0 40px 70px -30px rgba(88, 196, 220, .6); }
+        .card--react .card__orbits { position: absolute; z-index: -1; right: -90px; top: -90px; width: 300px; height: 300px; color: #087ea4; opacity: .14; animation: spin 60s linear infinite; }
+        .card--react .card__mark { background: rgba(8, 126, 164, .1); color: #087ea4; }
+        .card--react h2 { font-family: "Noto Serif Georgian", Georgia, serif; color: #161a26; }
+        .card--react h2 em { font-style: normal; color: #087ea4; }
+        .card--react .chips li { background: #fff; color: #087ea4; box-shadow: 0 0 0 1px #e4e0d7; }
+        .card--react .card__go { background: #087ea4; color: #fff; }
+
+        /* Next.js: the netrunner */
+        .card--next {
+            color: #c9c5e8;
+            border-radius: 4px;
+            background:
+                linear-gradient(#00f0ff, #00f0ff) top left / 22px 2px no-repeat,
+                linear-gradient(#00f0ff, #00f0ff) top left / 2px 22px no-repeat,
+                linear-gradient(#ff2bd6, #ff2bd6) bottom right / 22px 2px no-repeat,
+                linear-gradient(#ff2bd6, #ff2bd6) bottom right / 2px 22px no-repeat,
+                radial-gradient(70% 50% at 100% 0%, rgba(255, 43, 214, .22), transparent 70%),
+                #0b0a15;
+            box-shadow: 0 30px 60px -30px rgba(255, 43, 214, .45);
+        }
+        .card--next:hover { box-shadow: 0 40px 70px -30px rgba(255, 43, 214, .65); }
+        .card--next .card__grid {
+            position: absolute;
+            z-index: -1;
+            left: -40%;
+            right: -40%;
+            bottom: -30px;
+            height: 180px;
+            background-image: linear-gradient(rgba(0, 240, 255, .45) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 240, 255, .45) 1px, transparent 1px);
+            background-size: 40px 40px;
+            transform: perspective(260px) rotateX(62deg);
+            transform-origin: 50% 0;
+            -webkit-mask-image: linear-gradient(to top, #000, transparent);
+            mask-image: linear-gradient(to top, #000, transparent);
+            opacity: .35;
+            animation: gridRun 3s linear infinite;
+        }
+        .card--next .card__step::before { content: "// "; color: #ff6ae3; }
+        .card--next .card__mark { border-radius: 0; background: rgba(0, 240, 255, .1); color: #3ff4ff; border: 1px solid rgba(0, 240, 255, .3); }
+        .card--next h2 { font-family: "Chakra Petch", var(--font); color: #fff; text-shadow: 0 0 22px rgba(0, 240, 255, .35); }
+        .card--next h2 em { font-style: normal; color: #ff2bd6; text-shadow: 0 0 22px rgba(255, 43, 214, .5); }
+        .card--next .chips li { border-radius: 0; background: rgba(0, 240, 255, .08); color: #3ff4ff; }
+        .card--next .card__go {
+            border-radius: 0;
+            background: #00f0ff;
+            color: #05040b;
+            font-family: "Chakra Petch", var(--font);
+            letter-spacing: .04em;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes gridRun { to { background-position: 0 40px, 0 0; } }
+
+        /* ---------- footer ---------- */
+        .foot { padding: 28px 16px 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; text-align: center; }
+        .foot a { color: #fff; }
+
+        /* two columns: the third card takes the whole row */
+        @media (max-width: 1035px) {
+            .cards > li:last-child { grid-column: 1 / -1; }
+        }
+        @media (max-width: 720px) {
+            .top { padding-top: 56px; }
+            .card { min-height: 0; padding: 22px; }
+            .card h2 { font-size: 28px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <header class="wrap top">
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <h1>Sum-up Helper</h1>
+        <p>JavaScript, React და Next.js შეჯამებები ერთ ადგილას. ყოველი თემა ცხოვრებისეული მაგალითით და გაშვებადი კოდით, ბოლოს კი პრაქტიკა თამაშად.</p>
+        <ul class="steps" aria-label="როგორ მუშაობს">
+            <li><b>1</b> გაიგე მაგალითით</li>
+            <li><b>2</b> გაუშვი კოდი</li>
+            <li><b>3</b> ითამაშე: 4 დონე, 3 გული, მონეტები</li>
+        </ul>
+    </header>
+
+    <main class="wrap path">
+        <p class="path__label">სწავლის გზა: JavaScript → React → Next.js</p>
+        <ul class="cards">
+            <li>
+                <a class="card card--js" href="js/index.html">
+                    <span class="card__step">01 · საფუძვლები</span>
+                    <span class="card__mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                    </span>
+                    <h2>JS ფოთლები</h2>
+                    <p class="card__lead">Vanilla JavaScript ფრეიმვორკების გარეშე: ცვლადებიდან API-მდე, ფოთლების ბაღის მაგალითზე. შემოდგომის ტყე და ყანჩელის „ყვითელი ფოთლები“.</p>
+                    <ul class="chips" aria-label="თემები">
+                        <li>ცვლადები</li><li>პირობები</li><li>ციკლები</li><li>ფუნქციები</li><li>კლასები</li><li>DOM</li><li>BOM</li><li>API</li>
+                    </ul>
+                    <p class="card__meta">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>8 თემა</span>
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h4M8 10v4"/></svg>4 დონე</span>
+                    </p>
+                    <span class="card__go">გახსნა<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                </a>
+            </li>
+            <li>
+                <a class="card card--react" href="react/index.html">
+                    <svg class="card__orbits" viewBox="-100 -100 200 200" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><ellipse rx="96" ry="36"/><ellipse rx="96" ry="36" transform="rotate(60)"/><ellipse rx="96" ry="36" transform="rotate(120)"/></svg>
+                    <span class="card__step">02 · კომპონენტები</span>
+                    <span class="card__mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"/></svg>
+                    </span>
+                    <h2>React <em>სტუდია</em></h2>
+                    <p class="card__lead">კომპონენტებიდან სერვერის მონაცემებამდე. დემოები ნამდვილ React-ზე მუშაობს, ჰერო-კომპიუტერი კი კოდს თავად წერს და უშვებს.</p>
+                    <ul class="chips" aria-label="თემები">
+                        <li>Components</li><li>State</li><li>Lists</li><li>Effects</li><li>Context</li><li>Router</li><li>Forms</li><li>Query</li>
+                    </ul>
+                    <p class="card__meta">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>8 თემა</span>
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h4M8 10v4"/></svg>4 დონე</span>
+                    </p>
+                    <span class="card__go">გახსნა<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                </a>
+            </li>
+            <li>
+                <a class="card card--next" href="nextjs/index.html">
+                    <span class="card__grid" aria-hidden="true"></span>
+                    <span class="card__step">03 · full-stack</span>
+                    <span class="card__mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></svg>
+                    </span>
+                    <h2>Next.js <em>Netrunner</em></h2>
+                    <p class="card__lead">სერვერი, ქეში, action-ები და დაცვა ცოცხალი სიმულაციებით: სერვერის ლოგები, streaming და პაკეტები ბრაუზერამდე.</p>
+                    <ul class="chips" aria-label="თემები">
+                        <li>Rendering</li><li>Routing</li><li>Server</li><li>Data</li><li>Cache</li><li>Actions</li><li>API</li><li>Database</li><li>Auth</li>
+                    </ul>
+                    <p class="card__meta">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>9 თემა</span>
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h4M8 10v4"/></svg>4 დონე</span>
+                    </p>
+                    <span class="card__go">ჩართვა<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                </a>
+            </li>
+        </ul>
+    </main>
+
+    <footer class="foot">
+        <p>სამივე საიტი build-ის გარეშე მუშაობს: უბრალოდ HTML, CSS და JavaScript. <a href="https://github.com/thothcher/sumup-helper">კოდი GitHub-ზე</a></p>
+    </footer>
+</body>
+</html>

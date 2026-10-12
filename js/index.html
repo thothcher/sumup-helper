@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b140f">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e6c34a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z'/%3E%3Cpath d='M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12'/%3E%3C/svg%3E">
+    <title>JS ფოთლები</title>
+    <meta name="description" content="JavaScript-ის 8 ძირითადი თემა ერთ ჯაჭვად: მაგალითები, გაშვებადი კოდი და პრაქტიკა თამაშად, დონეებით და მონეტებით.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="basics.css">
+    <link rel="stylesheet" href="game.css">
+
+    <!-- order matters: data → helpers → features → main -->
+    <script src="src/icons.js" defer></script>
+    <script src="src/helpers.js" defer></script>
+    <script src="src/data/topics.js" defer></script>
+    <script src="src/data/quiz.js" defer></script>
+    <script src="src/data/practice.js" defer></script>
+    <script src="src/data/puzzles.js" defer></script>
+    <script src="src/data/seasons.js" defer></script>
+    <script src="src/data/game.js" defer></script>
+    <script src="src/topics.js" defer></script>
+    <script src="src/game.js" defer></script>
+    <script src="src/levels.js" defer></script>
+    <script src="src/leaves.js" defer></script>
+    <script src="src/music.js" defer></script>
+    <script src="src/seasons.js" defer></script>
+    <script src="src/main.js" defer></script>
+</head>
+<body>
+    <div class="forest" id="forest" aria-hidden="true"></div>
+    <canvas id="leaves" aria-hidden="true"></canvas>
+    <div class="yt-wrap" id="yt-wrap" aria-hidden="true"></div>
+
+    <header class="hero">
+        <p class="hero__eyebrow">Vanilla JavaScript</p>
+        <h1 class="sr-only">JS-ის 8 ფოთოლი</h1>
+
+        <ol class="howto" aria-label="როგორ ვისწავლოთ">
+            <li><span class="howto__no">1</span><span><b>გაიგე</b> ცხოვრებისეული მაგალითით</span></li>
+            <li><span class="howto__no">2</span><span><b>ნახე</b> კოდი და გაუშვი</span></li>
+            <li><span class="howto__no">3</span><span><b>შეამოწმე</b> თავი პრაქტიკაში</span></li>
+        </ol>
+
+        <a class="btn btn--primary" href="#variables">
+            დავიწყოთ
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+        </a>
+    </header>
+
+    <nav class="chain" aria-label="თემების ჯაჭვი">
+        <div class="chain__bar">
+            <ol class="chain__list" id="chain"></ol>
+
+            <div class="player">
+                <button class="music" id="music-btn" type="button" aria-pressed="false" aria-label="მუსიკის ჩართვა">
+                    <span class="music__icon">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                    </span>
+                    <span class="music__eq" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <span class="music__text">
+                        <span class="music__title">გია ყანჩელი</span>
+                        <span class="music__sub">ყვითელი ფოთლები</span>
+                    </span>
+                </button>
+                <button class="season-btn" id="season-btn" type="button" aria-expanded="false" aria-controls="season-menu" aria-label="სეზონი და მუსიკა"></button>
+                <div class="season-menu" id="season-menu" hidden></div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="wrap">
+        <div class="topics" id="topics"></div>
+
+        <section class="practice" id="practice" aria-labelledby="practice-title">
+            <header class="practice__intro">
+                <p class="eyebrow">პრაქტიკა</p>
+                <h2 id="practice-title">ოთხი დონე, სამი გული</h2>
+                <p>ყოველი სწორი პასუხი მონეტებს მოგიტანს, ზედიზედ სამი კი კომბოს. სამ გულზე მეტი არ გაქვს: ქარი ძლიერია.</p>
+            </header>
+            <div class="game" id="game"></div>
+        </section>
+    </main>
+
+    <footer class="foot">
+        <p>
+            გაკეთებულია vanilla JS-ით
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+            ფრეიმვორკების გარეშე.
+        </p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,329 @@
+'use strict';
+
+/* =========================================================
+   PRACTICE DATA
+   BUGS     — find the line with the bug
+   OUTPUTS  — predict what happens
+   (PUZZLES live in puzzles.js)
+   ========================================================= */
+
+/**
+ * bug:  index of the line that causes the problem
+ * fix:  the corrected version of that line
+ */
+const BUGS = [
+    {
+        topic: 'routing',
+        goal: '/plants/monstera-ზე მონსტერა უნდა გამოჩნდეს',
+        lines: [
+            'export default async function PlantPage({ params }: Props) {',
+            '  const { slug } = params;',
+            '  const plant = await getPlant(slug);',
+            '  return <h1>{plant.name}</h1>;',
+            '}',
+        ],
+        bug: 1,
+        fix: '  const { slug } = await params;',
+        hint: 'რა ტიპისაა params Next.js 16-ში?',
+        explain: 'Next.js 16-ში params Promise-ია. await-ის გარეშე slug undefined-ია, getPlant ვერაფერს პოულობს და plant.name შეცდომას აგდებს.',
+    },
+    {
+        topic: 'routing',
+        goal: 'გვერდებს შორის გადასვლა სწრაფი უნდა იყოს, გადატვირთვის გარეშე',
+        lines: [
+            "import Link from 'next/link';",
+            '',
+            'export function Nav() {',
+            '  return (',
+            '    <nav>',
+            '      <Link href="/">მთავარი</Link>',
+            '      <a href="/plants">მცენარეები</a>',
+            '    </nav>',
+            '  );',
+            '}',
+        ],
+        bug: 6,
+        fix: '      <Link href="/plants">მცენარეები</Link>',
+        hint: 'რომელი ბმული ტვირთავს მთელ გვერდს თავიდან?',
+        explain: '<a href> ბრაუზერს მთელ გვერდს თავიდან ატვირთვინებს და კლიენტის state-ს კარგავს. <Link> კლიენტურ ნავიგაციას და prefetch-ს აკეთებს.',
+    },
+    {
+        topic: 'server',
+        goal: 'ღილაკზე დაჭერა „მოწონებებს“ უნდა ზრდიდეს',
+        lines: [
+            "'use server';",
+            "import { useState } from 'react';",
+            '',
+            'export function LikeButton() {',
+            '  const [likes, setLikes] = useState(0);',
+            '  return <button onClick={() => setLikes(likes + 1)}>{likes}</button>;',
+            '}',
+        ],
+        bug: 0,
+        fix: "'use client';",
+        hint: 'useState და onClick სად მუშაობს: სერვერზე თუ ბრაუზერში?',
+        explain: '"use server" Server Action-ების ფაილს აღნიშნავს და არა კომპონენტს. useState და onClick მხოლოდ Client Component-ში მუშაობს, ამიტომ ფაილის თავში "use client" უნდა ეწეროს.',
+    },
+    {
+        topic: 'server',
+        goal: 'მცენარის გვერდზე „კალათაში“ ღილაკი უნდა გამოჩნდეს',
+        lines: [
+            '// Server Component',
+            'export default async function PlantPage() {',
+            '  const plant = await getPlant(1);',
+            '  return (',
+            "    <AddToCart onAdd={() => console.log('დაემატა')} />",
+            '  );',
+            '}',
+        ],
+        bug: 4,
+        fix: '    <AddToCart plantId={plant.id} />',
+        hint: 'რა შეიძლება გადაეცეს სერვერიდან Client Component-ს props-ად?',
+        explain: 'Server Component-იდან Client Component-ს ჩვეულებრივ ფუნქციას ვერ გადასცემ: props JSON-ის მსგავსად სერიალიზდება, ფუნქცია კი ვერა. გადაეცი მონაცემი (plantId), ქცევა კი Client Component-ის შიგნით დაწერე.',
+    },
+    {
+        topic: 'data',
+        goal: 'მცენარეების სია უნდა გამოჩნდეს',
+        lines: [
+            'export default async function PlantsPage() {',
+            '  const plants = getPlants();',
+            '  return (',
+            '    <ul>{plants.map(p => <li key={p.id}>{p.name}</li>)}</ul>',
+            '  );',
+            '}',
+        ],
+        bug: 1,
+        fix: '  const plants = await getPlants();',
+        hint: 'რას აბრუნებს async ფუნქცია, თუ მას არ დაელოდები?',
+        explain: 'getPlants() Promise-ს აბრუნებს. await-ის გარეშე plants Promise-ია და plants.map შეცდომას აგდებს: „plants.map is not a function“.',
+    },
+    {
+        topic: 'cache',
+        goal: 'ყოველმა მომხმარებელმა მხოლოდ საკუთარი კალათა უნდა ნახოს',
+        lines: [
+            'export async function getCart() {',
+            "  'use cache';",
+            "  const userId = (await cookies()).get('uid')?.value;",
+            '  return db.select().from(carts).where(eq(carts.userId, userId));',
+            '}',
+        ],
+        bug: 1,
+        fix: '  // პერსონალური მონაცემი: ქეშის გარეშე',
+        hint: 'შეიძლება თუ არა ერთი კალათის ქეში ყველა მომხმარებლისთვის?',
+        explain: 'კალათა ყველას თავისი აქვს. cookies() ქეშირებულ ფუნქციაში დაუშვებელია (Next.js შეცდომას აგდებს), და რომც შეიძლებოდეს, ერთის კალათა მეორეს ეჩვენებოდა. პერსონალური მონაცემი ქეშის გარეთ რჩება.',
+    },
+    {
+        topic: 'cache',
+        goal: 'ახალი მცენარე დამატებისთანავე უნდა გამოჩნდეს სიაში',
+        lines: [
+            "// getPlants() შიგნით: cacheTag('plants')",
+            '',
+            'export async function createPlant(formData: FormData) {',
+            "  'use server';",
+            '  await db.insert(plants).values(parsePlant(formData));',
+            "  updateTag('plant');",
+            '}',
+        ],
+        bug: 5,
+        fix: "  updateTag('plants');",
+        hint: 'შეადარე ჭდე, რომლითაც ქეში შეინახა, და ჭდე, რომელსაც შლი.',
+        explain: "ქეში 'plants' ჭდით ინახება, action კი 'plant'-ს შლის. ასეთი ჭდე არ არსებობს, ქეში ხელუხლებელი რჩება და სია ძველია. ჭდე ზუსტად უნდა ემთხვეოდეს.",
+    },
+    {
+        topic: 'actions',
+        goal: 'მომხმარებელმა მხოლოდ საკუთარი შეკვეთის წაშლა უნდა შეძლოს',
+        lines: [
+            'export async function deleteOrder(formData: FormData) {',
+            "  'use server';",
+            "  const userId = formData.get('userId');",
+            "  const orderId = Number(formData.get('orderId'));",
+            '  await db.delete(orders)',
+            '    .where(and(eq(orders.id, orderId), eq(orders.userId, userId)));',
+            '}',
+        ],
+        bug: 2,
+        fix: '  const userId = (await requireSession()).user.id;',
+        hint: 'ვინ წყვეტს, რა ეწერება ფორმის ველში?',
+        explain: 'userId ფორმიდან მოდის, ანუ მომხმარებელს შეუძლია ნებისმიერი სხვისი id ჩაწეროს და სხვისი შეკვეთა წაშალოს. ვინაობა მხოლოდ სერვერის სესიიდან იკითხება.',
+    },
+    {
+        topic: 'actions',
+        goal: 'ფორმის გაგზავნისას სახელი სერვერამდე უნდა მივიდეს',
+        lines: [
+            '<form action={createPlant}>',
+            '  <input placeholder="სახელი" />',
+            '  <button>დამატება</button>',
+            '</form>',
+            '',
+            "// createPlant-ში: formData.get('name') → null",
+        ],
+        bug: 1,
+        fix: '  <input name="name" placeholder="სახელი" />',
+        hint: 'რის მიხედვით აგროვებს FormData ველებს?',
+        explain: 'FormData ველებს name ატრიბუტით აგროვებს. name-ის გარეშე ველი ფორმის მონაცემში არ ხვდება და formData.get(\'name\') null-ს აბრუნებს.',
+    },
+    {
+        topic: 'api',
+        goal: 'არასწორი მონაცემისას კლიენტმა უნდა გაიგოს, რომ მოთხოვნა ვერ შესრულდა',
+        lines: [
+            'export async function POST(request: Request) {',
+            '  const parsed = PlantSchema.safeParse(await request.json());',
+            '  if (!parsed.success) {',
+            "    return Response.json({ error: 'არასწორი მონაცემი' });",
+            '  }',
+            '  return Response.json(await createPlant(parsed.data), { status: 201 });',
+            '}',
+        ],
+        bug: 3,
+        fix: "    return Response.json({ error: 'არასწორი მონაცემი' }, { status: 400 });",
+        hint: 'რა სტატუსით მიდის პასუხი, თუ მას არ მიუთითებ?',
+        explain: 'სტატუსის გარეშე Response.json 200 OK-ს აბრუნებს, კლიენტის res.ok true-ა და შეცდომა წარმატებად ჩაითვლება. არასწორი მონაცემი 400 Bad Request-ია.',
+    },
+    {
+        topic: 'api',
+        goal: 'GET /api/plants მცენარეების სიას უნდა აბრუნებდეს',
+        lines: [
+            '// app/api/plants/route.ts',
+            'export async function get() {',
+            '  const plants = await listPlants();',
+            '  return Response.json(plants);',
+            '}',
+        ],
+        bug: 1,
+        fix: 'export async function GET() {',
+        hint: 'რა სახელით პოულობს Next.js HTTP მეთოდის ფუნქციას?',
+        explain: 'Route Handler-ის ფუნქციის სახელი HTTP მეთოდის სახელია, დიდი ასოებით: GET, POST, DELETE. get-ს Next.js ვერ ცნობს და GET მოთხოვნას 405 Method Not Allowed-ით პასუხობს.',
+    },
+    {
+        topic: 'db',
+        goal: 'მცენარე სახელით უნდა მოიძებნოს, უსაფრთხოდ',
+        lines: [
+            'export async function findPlant(name: string) {',
+            "  return db.execute(sql.raw(`SELECT * FROM plants WHERE name = '${name}'`));",
+            '}',
+        ],
+        bug: 1,
+        fix: '  return db.select().from(plants).where(eq(plants.name, name));',
+        hint: "რა მოხდება, თუ name იქნება: ' OR 1=1 --",
+        explain: "სახელი SQL-ის ტექსტს პირდაპირ ეწებება. ' OR 1=1 -- ყველა ჩანაწერს დააბრუნებს, უარესი შეყვანა კი ცხრილს წაშლის (SQL injection). eq() მნიშვნელობას პარამეტრად გადასცემს და ის ბრძანებად ვერ იქცევა.",
+    },
+    {
+        topic: 'auth',
+        goal: 'გადახდის საიდუმლო გასაღები ბრაუზერში არ უნდა მოხვდეს',
+        lines: [
+            "import Stripe from 'stripe';",
+            '',
+            'export const stripe = new Stripe(',
+            '  process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!,',
+            ');',
+        ],
+        bug: 3,
+        fix: '  process.env.STRIPE_SECRET_KEY!,',
+        hint: 'რას ნიშნავს NEXT_PUBLIC_ თავსართი?',
+        explain: 'NEXT_PUBLIC_ ცვლადი build-ისას კლიენტის JS-ში ჩაიწერება და ნებისმიერს შეუძლია მისი წაკითხვა. საიდუმლო გასაღები მხოლოდ სერვერის ცვლადშია, თავსართის გარეშე.',
+    },
+];
+
+/** answer: index into options. label: what the student predicts. */
+const WHERE = 'სად დაიბეჭდება?';
+const OUTPUTS = [
+    {
+        code: "// app/page.tsx (Server Component)\nexport default function Page() {\n  console.log('render');\n  return <h1>მთავარი</h1>;\n}",
+        label: WHERE, icon: 'terminal',
+        options: ['ბრაუზერის კონსოლში', 'ტერმინალში (სერვერზე)', 'ორივეგან', 'არსად'],
+        answer: 1,
+        explain: 'Server Component მხოლოდ სერვერზე სრულდება, ამიტომ მისი log ტერმინალში ჩანს, ბრაუზერის DevTools-ში კი არა.',
+    },
+    {
+        code: "'use client';\nexport function Counter() {\n  console.log('render');\n  return <button>0</button>;\n}\n// გვერდის პირველი ჩატვირთვა",
+        label: WHERE, icon: 'terminal',
+        options: ['მხოლოდ ბრაუზერში', 'მხოლოდ ტერმინალში', 'ორივეგან', 'არსად'],
+        answer: 2,
+        explain: 'Client Component-იც პირველად სერვერზე რენდერდება (pre-render, HTML-ისთვის), მერე კი ბრაუზერში hydration-ისას. ამიტომ log ორივეგან ჩანს.',
+    },
+    {
+        code: "const plant = await getPlant();   // 300 ms\nconst stock = await getStock();   // 500 ms\n// რამდენ ხანს ელოდება გვერდი?",
+        label: 'დაახლოებით:', icon: 'clock',
+        options: ['300 ms', '500 ms', '800 ms', '0 ms'],
+        answer: 2,
+        explain: 'ორი await რიგრიგობით სრულდება: 300 + 500 = 800 ms (waterfall), თუმცა მოთხოვნები ერთმანეთზე არ არის დამოკიდებული.',
+    },
+    {
+        code: "const [plant, stock] = await Promise.all([\n  getPlant(),   // 300 ms\n  getStock(),   // 500 ms\n]);",
+        label: 'დაახლოებით:', icon: 'clock',
+        options: ['300 ms', '500 ms', '800 ms', '150 ms'],
+        answer: 1,
+        explain: 'Promise.all ორივეს ერთად იწყებს და ყველაზე ნელს ელოდება: 500 ms.',
+    },
+    {
+        code: "// app/about/page.tsx\nexport default function About() {\n  return <p>ჩვენ ვყიდით მცენარეებს.</p>;\n}\n// next build-ში ეს გვერდი:",
+        label: 'build-ის სიმბოლო:', icon: 'terminal',
+        options: ['○ Static', 'ƒ Dynamic', '● SSG', 'შეცდომა'],
+        answer: 0,
+        explain: 'გვერდს არც მონაცემი, არც მოთხოვნის ინფორმაცია (cookies, headers) არ სჭირდება, ამიტომ HTML build-ისას ერთხელ იქმნება.',
+    },
+    {
+        code: "// app/cart/page.tsx\nexport default async function Cart() {\n  const id = (await cookies()).get('cart')?.value;\n  return <CartView id={id} />;\n}\n// next build-ში ეს გვერდი:",
+        label: 'build-ის სიმბოლო:', icon: 'terminal',
+        options: ['○ Static', 'ƒ Dynamic', '● SSG', 'ISR'],
+        answer: 1,
+        explain: 'cookies() ყოველ მომხმარებელს თავისი აქვს, ამიტომ გვერდი build-ისას ვერ აიწყობა: ის ყოველ მოთხოვნაზე სერვერზე იქმნება.',
+    },
+    {
+        code: "// app/(shop)/cart/page.tsx\n// ბრაუზერში რა მისამართზე გაიხსნება?",
+        label: 'URL:', icon: 'globe',
+        options: ['/(shop)/cart', '/shop/cart', '/cart', '404'],
+        answer: 2,
+        explain: 'ფრჩხილებიანი ფოლდერი route group-ია: კოდის ორგანიზებისთვის და layout-ისთვის. URL-ში ის არ ჩანს.',
+    },
+    {
+        code: "// app/docs/[...slug]/page.tsx\n// მისამართი: /docs/setup/install\nconst { slug } = await params;\nconsole.log(slug);",
+        label: 'ტერმინალში:', icon: 'terminal',
+        options: ["'setup/install'", "['setup', 'install']", "'install'", 'undefined'],
+        answer: 1,
+        explain: 'catch-all სეგმენტი [...slug] URL-ის დარჩენილ ნაწილებს მასივად აგროვებს.',
+    },
+    {
+        code: "// <input name=\"price\" type=\"number\" /> → 45\nexport async function save(formData: FormData) {\n  'use server';\n  console.log(typeof formData.get('price'));\n}",
+        label: 'ტერმინალში:', icon: 'terminal',
+        options: ["'number'", "'string'", "'object'", "'undefined'"],
+        answer: 1,
+        explain: 'FormData ყოველთვის სტრიქონებს (ან ფაილებს) ინახავს, type="number"-ის მიუხედავად. ამიტომ გვჭირდება z.coerce.number().',
+    },
+    {
+        code: "// route.ts\nreturn Response.json({ error: 'ვერ მოიძებნა' });\n\n// კლიენტი\nconst res = await fetch('/api/plants/99');\nconsole.log(res.ok);",
+        label: 'ბრაუზერის კონსოლში:', icon: 'terminal',
+        options: ['true', 'false', '404', 'შეცდომა'],
+        answer: 0,
+        explain: 'სტატუსი არ მიუთითებია, ამიტომ პასუხი 200 OK-ია და res.ok true-ა, თუმცა სხეულში შეცდომა წერია. სწორია { status: 404 }.',
+    },
+    {
+        code: "// 'use cache' + cacheTag('plants')\nawait getPlants();\nawait getPlants();\nupdateTag('plants');\nawait getPlants();",
+        label: 'რამდენჯერ მივა მოთხოვნა ბაზაში?', icon: 'database',
+        options: ['1', '2', '3', '0'],
+        answer: 1,
+        explain: 'პირველი გამოძახება ბაზაში მიდის (MISS), მეორე ქეშიდან იღებს (HIT). updateTag ქეშს შლის, ამიტომ მესამე ისევ ბაზაში მიდის: სულ 2.',
+    },
+    {
+        code: "// proxy.ts: matcher ['/admin/:path*']\n// შეუსვლელი სტუმარი ხსნის /admin/users",
+        label: 'სერვერის პასუხი:', icon: 'globe',
+        options: ['200 OK', '307 → /login', '403 Forbidden', '404 Not Found'],
+        answer: 1,
+        explain: 'proxy.ts session cookie-ს ვერ პოულობს და NextResponse.redirect-ით login-ზე აგზავნის. redirect ნაგულისხმევად 307-ია.',
+    },
+    {
+        code: "// მარაგი: 2. ტრანზაქციაში:\n// 1) INSERT შეკვეთა (3 ცალი)\n// 2) stock < qty → throw Error",
+        label: 'ტრანზაქციის შემდეგ:', icon: 'database',
+        options: ['შეკვეთა დარჩა, მარაგი 2', 'შეკვეთა არ არის, მარაგი 2', 'შეკვეთა დარჩა, მარაგი −1', 'შეკვეთა არ არის, მარაგი −1'],
+        answer: 1,
+        explain: 'ტრანზაქციაში შეცდომა ROLLBACK-ს იწვევს: უკვე შესრულებული INSERT-იც უქმდება. ან ყველაფერი, ან არაფერი.',
+    },
+];
+
+/** Small fake console used by the puzzle demos. */
+function consoleBox(lines) {
+    const box = document.createElement('pre');
+    box.className = 'demo-console';
+    box.textContent = lines.join('\n');
+    return box;
+}

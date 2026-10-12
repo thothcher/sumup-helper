@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#07060d">
+    <title>Next.js Netrunner</title>
+    <meta name="description" content="Next.js-ის 9 ძირითადი თემა ერთ ჯაჭვად: სიმულაციები, ცხოვრებისეული მაგალითები და პრაქტიკა თამაშად, დონეებით და კრედიტებით.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 2h12l4 4v12l-4 4H6l-4-4V6z' fill='%2307060d' stroke='%2300f0ff' stroke-width='1.5'/%3E%3Cpath d='M8 17V7l8 10V7' fill='none' stroke='%23ff2bd6' stroke-width='2'/%3E%3C/svg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Noto+Sans+Georgian:wdth,wght@62.5..100,400..800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/theme.css">
+
+    <!-- order matters: helpers → data → features → main -->
+    <script src="src/icons.js" defer></script>
+    <script src="src/helpers.js" defer></script>
+    <script src="src/demos.js" defer></script>
+    <script src="src/data/topics.js" defer></script>
+    <script src="src/data/quiz.js" defer></script>
+    <script src="src/data/practice.js" defer></script>
+    <script src="src/data/puzzles.js" defer></script>
+    <script src="src/data/game.js" defer></script>
+    <script src="src/topics.js" defer></script>
+    <script src="src/game.js" defer></script>
+    <script src="src/levels.js" defer></script>
+    <script src="src/screen.js" defer></script>
+    <script src="src/main.js" defer></script>
+</head>
+<body>
+    <div class="backdrop" aria-hidden="true">
+        <svg class="backdrop__shapes" viewBox="0 0 640 640" fill="none">
+            <circle class="ring" cx="320" cy="320" r="250" stroke="rgba(0,240,255,.16)" stroke-width="1" stroke-dasharray="2 10"/>
+            <circle cx="320" cy="320" r="190" stroke="rgba(255,43,214,.14)" stroke-width="1"/>
+            <path d="M60 520 L420 160 M120 560 L480 200 M180 600 L540 240" stroke="rgba(255,43,214,.12)" stroke-width="1"/>
+            <path d="M380 80 h120 l30 30 v60" stroke="rgba(0,240,255,.22)" stroke-width="1.5"/>
+        </svg>
+        <div class="backdrop__grid"></div>
+        <div class="backdrop__scan"></div>
+    </div>
+
+    <nav class="nav" aria-label="ნავიგაცია">
+        <div class="nav__bar">
+            <a class="brand" href="#top">
+                <span class="brand__mark" data-icon="cpu"></span>
+                <span class="brand__name">NEXT<b>//</b>RUN</span>
+            </a>
+            <ol class="chain__list" id="chain" aria-label="თემების ჯაჭვი"></ol>
+        </div>
+    </nav>
+
+    <header class="hero" id="top">
+        <div class="hero__text">
+            <p class="eyebrow">Next.js 16 · 9 თემა · 4 დონე</p>
+            <h1 class="hero__title" data-text="Next.js Netrunner">Next.js <em>Netrunner</em></h1>
+            <p class="hero__lead">სერვერი, ქეში, action-ები და დაცვა: ყოველი თემა ცხოვრებისეული მაგალითით და ცოცხალი სიმულაციით. ბოლოს ქსელში შედიხარ: ოთხი დონე, სამი გული და კრედიტები.</p>
+            <ol class="howto" aria-label="როგორ ვისწავლოთ">
+                <li><span class="howto__no">1</span><span><b>გაიგე</b> ცხოვრებისეული მაგალითით</span></li>
+                <li><span class="howto__no">2</span><span><b>გაუშვი</b> სიმულაცია და ნახე სერვერის მხარე</span></li>
+                <li><span class="howto__no">3</span><span><b>გატეხე</b> ოთხივე დონე და შეაგროვე კრედიტები</span></li>
+            </ol>
+            <div class="hero__cta">
+                <a class="btn btn--primary" href="#rendering">ჩართვა <span data-icon="arrowDown"></span></a>
+                <a class="btn" href="#practice"><span data-icon="gamepad"></span> პირდაპირ თამაშზე</a>
+            </div>
+        </div>
+        <div class="hero__visual" id="screen"></div>
+    </header>
+
+    <main>
+        <div class="wrap">
+            <div class="topics" id="topics"></div>
+        </div>
+
+        <section class="practice" id="practice" aria-labelledby="practice-title">
+            <header class="practice__intro">
+                <p class="eyebrow">პრაქტიკა</p>
+                <h2 id="practice-title">ოთხი დონე, სამი გული</h2>
+                <p>ყოველი სწორი პასუხი კრედიტებს მოგიტანს, ზედიზედ სამი კი კომბოს. სამ გულზე მეტი არ გაქვს: ICE არ აპატიებს.</p>
+            </header>
+            <div class="game" id="game"></div>
+        </section>
+    </main>
+
+    <footer class="foot">
+        <p>სერვერს აქ ბრაუზერის JS ასახავს. ნამდვილ Next.js პროექტს შენ ააწყობ.</p>
+    </footer>
+</body>
+</html>

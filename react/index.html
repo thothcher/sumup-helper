@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f6f4ef">
+    <title>React სტუდია</title>
+    <meta name="description" content="React-ის 8 ძირითადი თემა ერთ ჯაჭვად: ცხოვრებისეული მაგალითები, ცოცხალი დემოები და პრაქტიკა თამაშად, დონეებით და მონეტებით.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-12 -12 24 24'%3E%3Cg fill='none' stroke='%23087ea4' stroke-width='1.3'%3E%3Cellipse rx='10' ry='4'/%3E%3Cellipse rx='10' ry='4' transform='rotate(60)'/%3E%3Cellipse rx='10' ry='4' transform='rotate(120)'/%3E%3C/g%3E%3Ccircle r='2' fill='%23087ea4'/%3E%3C/svg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600;700&family=Noto+Serif+Georgian:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/theme.css">
+
+    <!-- order matters: React → helpers → data → features → main -->
+    <script src="vendor/react.production.min.js" defer></script>
+    <script src="vendor/react-dom.production.min.js" defer></script>
+    <script src="src/icons.js" defer></script>
+    <script src="src/helpers.js" defer></script>
+    <script src="src/demos.js" defer></script>
+    <script src="src/data/topics.js" defer></script>
+    <script src="src/data/quiz.js" defer></script>
+    <script src="src/data/practice.js" defer></script>
+    <script src="src/data/puzzles.js" defer></script>
+    <script src="src/data/game.js" defer></script>
+    <script src="src/topics.js" defer></script>
+    <script src="src/game.js" defer></script>
+    <script src="src/levels.js" defer></script>
+    <script src="src/screen.js" defer></script>
+    <script src="src/main.js" defer></script>
+</head>
+<body>
+    <div class="backdrop" aria-hidden="true">
+        <div class="backdrop__blob backdrop__blob--a"></div>
+        <div class="backdrop__blob backdrop__blob--b"></div>
+        <div class="backdrop__dots"></div>
+        <svg class="backdrop__orbits" viewBox="-100 -100 200 200" fill="none" stroke="currentColor" stroke-width=".5">
+            <ellipse rx="96" ry="36"/>
+            <ellipse rx="96" ry="36" transform="rotate(60)"/>
+            <ellipse rx="96" ry="36" transform="rotate(120)"/>
+        </svg>
+    </div>
+
+    <nav class="nav" aria-label="ნავიგაცია">
+        <div class="nav__bar">
+            <a class="brand" href="#top">
+                <span class="brand__mark" data-icon="atom"></span>
+                <span class="brand__name">React სტუდია</span>
+            </a>
+            <ol class="chain__list" id="chain" aria-label="თემების ჯაჭვი"></ol>
+        </div>
+    </nav>
+
+    <header class="hero" id="top">
+        <div class="hero__text">
+            <p class="eyebrow">React · 8 თემა · 4 დონე</p>
+            <h1 class="hero__title">React <em>სტუდია</em></h1>
+            <p class="hero__lead">კომპონენტებიდან სერვერის მონაცემებამდე: ყოველი თემა ცხოვრებისეული მაგალითით და ცოცხალი დემოთი. ბოლოს თამაში: ოთხი დონე, სამი გული და მონეტები.</p>
+            <ol class="howto" aria-label="როგორ ვისწავლოთ">
+                <li><span class="howto__no">1</span><span><b>გაიგე</b> ცხოვრებისეული მაგალითით</span></li>
+                <li><span class="howto__no">2</span><span><b>ნახე</b> კოდი და გაუშვი ცოცხლად</span></li>
+                <li><span class="howto__no">3</span><span><b>ითამაშე</b>: შეაგროვე მონეტები, არ დაკარგო გულები</span></li>
+            </ol>
+            <div class="hero__cta">
+                <a class="btn btn--primary" href="#components">დავიწყოთ <span data-icon="arrowDown"></span></a>
+                <a class="btn" href="#practice"><span data-icon="gamepad"></span> პირდაპირ თამაშზე</a>
+            </div>
+        </div>
+        <div class="hero__visual" id="screen"></div>
+    </header>
+
+    <main>
+        <div class="wrap">
+            <div class="topics" id="topics"></div>
+        </div>
+
+        <section class="practice" id="practice" aria-labelledby="practice-title">
+            <header class="practice__intro">
+                <p class="eyebrow">პრაქტიკა</p>
+                <h2 id="practice-title">ოთხი დონე, სამი გული</h2>
+                <p>ყოველი სწორი პასუხი მონეტებს მოგიტანს, ზედიზედ სამი კი კომბოს. სამ გულზე მეტი არ გაქვს, ასე რომ ფრთხილად.</p>
+            </header>
+            <div class="game" id="game"></div>
+        </section>
+    </main>
+
+    <footer class="foot">
+        <p>დემოები ნამდვილ React-ზე მუშაობს, build-ის გარეშე.</p>
+    </footer>
+</body>
+</html>
