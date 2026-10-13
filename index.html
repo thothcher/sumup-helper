@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#101114">
     <title>Sum-up Helper</title>
-    <meta name="description" content="JavaScript, React და Next.js შეჯამებები: ცხოვრებისეული მაგალითები, ცოცხალი დემოები და პრაქტიკა თამაშად.">
+    <meta name="description" content="JavaScript, React, Next.js და Angular შეჯამებები: ცხოვრებისეული მაგალითები, ცოცხალი დემოები და პრაქტიკა თამაშად.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23101114'/%3E%3Ccircle cx='7' cy='12' r='3' fill='%23e6c34a'/%3E%3Ccircle cx='12' cy='12' r='3' fill='%2358c4dc'/%3E%3Ccircle cx='17' cy='12' r='3' fill='%23ff2bd6'/%3E%3C/svg%3E">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,6 +33,7 @@
                 radial-gradient(40% 35% at 12% 0%, rgba(230, 195, 74, .09), transparent 70%),
                 radial-gradient(40% 35% at 50% 0%, rgba(88, 196, 220, .08), transparent 70%),
                 radial-gradient(40% 35% at 88% 0%, rgba(255, 43, 214, .08), transparent 70%),
+                radial-gradient(40% 40% at 50% 100%, rgba(124, 58, 237, .08), transparent 70%),
                 var(--bg);
             color: var(--text);
             font: 16px/1.6 var(--font);
@@ -51,6 +52,7 @@
         .dots i:nth-child(1) { background: #e6c34a; }
         .dots i:nth-child(2) { background: #58c4dc; }
         .dots i:nth-child(3) { background: #ff2bd6; }
+        .dots i:nth-child(4) { background: linear-gradient(135deg, #f0145a, #7c3aed); }
         .top h1 { font-size: clamp(40px, 7vw, 72px); line-height: 1.05; font-weight: 800; letter-spacing: -.02em; color: #fff; }
         .top p { max-width: 36em; color: var(--muted); font-size: 18px; }
         .steps { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
@@ -74,7 +76,7 @@
             margin: 0;
             padding: 0;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+            grid-template-columns: 1fr;
             gap: 22px;
         }
         .cards > li { display: flex; }
@@ -86,7 +88,7 @@
             flex-direction: column;
             gap: 16px;
             width: 100%;
-            min-height: 470px;
+            min-height: 440px;
             padding: 26px;
             overflow: hidden;
             border-radius: 22px;
@@ -197,16 +199,35 @@
             clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
         }
 
+        /* Angular: the signal */
+        .card--ng {
+            color: #3a3448;
+            border: 1px solid transparent;
+            background:
+                linear-gradient(160deg, #fbfafe, #f2eff9) padding-box,
+                linear-gradient(120deg, #f0145a, #c2187f 45%, #7c3aed) border-box;
+            box-shadow: 0 30px 60px -30px rgba(124, 58, 237, .5);
+        }
+        .card--ng:hover { box-shadow: 0 40px 70px -30px rgba(124, 58, 237, .7); }
+        .card--ng .card__waves { position: absolute; z-index: -1; left: -5%; top: 34%; width: 110%; height: 120px; opacity: .55; }
+        .card--ng .card__waves path { fill: none; stroke: #e7a6c8; stroke-width: 1.4; stroke-dasharray: 10 8; animation: flow 8s linear infinite; }
+        .card--ng .card__waves path + path { stroke: #c4b5fd; animation-duration: 12s; }
+        .card--ng .card__mark { background: linear-gradient(120deg, #f0145a, #7c3aed); color: #fff; }
+        .card--ng h2 { color: #120d1f; font-weight: 800; letter-spacing: -.02em; }
+        .card--ng h2 em { font-style: normal; background: linear-gradient(120deg, #f0145a, #c2187f 45%, #7c3aed); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .card--ng .chips li { background: #fff; color: #c0143f; box-shadow: 0 0 0 1px #ebe8f3; }
+        .card--ng .card__go { background: linear-gradient(120deg, #f0145a, #c2187f 45%, #7c3aed); color: #fff; }
+
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes flow { to { stroke-dashoffset: -180; } }
         @keyframes gridRun { to { background-position: 0 40px, 0 0; } }
 
         /* ---------- footer ---------- */
         .foot { padding: 28px 16px 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; text-align: center; }
         .foot a { color: #fff; }
 
-        /* two columns: the third card takes the whole row */
-        @media (max-width: 1035px) {
-            .cards > li:last-child { grid-column: 1 / -1; }
+        @media (min-width: 760px) {
+            .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
         @media (max-width: 720px) {
             .top { padding-top: 56px; }
@@ -220,9 +241,9 @@
 </head>
 <body>
     <header class="wrap top">
-        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
         <h1>Sum-up Helper</h1>
-        <p>JavaScript, React და Next.js შეჯამებები ერთ ადგილას. ყოველი თემა ცხოვრებისეული მაგალითით და გაშვებადი კოდით, ბოლოს კი პრაქტიკა თამაშად.</p>
+        <p>JavaScript, React, Next.js და Angular შეჯამებები ერთ ადგილას. ყოველი თემა ცხოვრებისეული მაგალითით და გაშვებადი კოდით, ბოლოს კი პრაქტიკა თამაშად.</p>
         <ul class="steps" aria-label="როგორ მუშაობს">
             <li><b>1</b> გაიგე მაგალითით</li>
             <li><b>2</b> გაუშვი კოდი</li>
@@ -231,7 +252,7 @@
     </header>
 
     <main class="wrap path">
-        <p class="path__label">სწავლის გზა: JavaScript → React → Next.js</p>
+        <p class="path__label">სწავლის გზა: JavaScript → React → Next.js, ან JavaScript → Angular</p>
         <ul class="cards">
             <li>
                 <a class="card card--js" href="js/index.html">
@@ -289,11 +310,30 @@
                     <span class="card__go">ჩართვა<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                 </a>
             </li>
+            <li>
+                <a class="card card--ng" href="angular/index.html">
+                    <svg class="card__waves" viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 50 C60 20 120 80 200 50 S340 20 400 50"/><path d="M0 66 C80 40 140 92 220 64 S350 36 400 62"/></svg>
+                    <span class="card__step">02 · სხვა გზა</span>
+                    <span class="card__mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 3.2-1.4 12.3L12 22l-7.6-4.5L3 5.2z"/><path d="m13 7-3 5h4l-3 5"/></svg>
+                    </span>
+                    <h2>Angular <em>სიგნალი</em></h2>
+                    <p class="card__lead">კომპონენტები, სიგნალები, DI და Router სათბურის მაგალითზე. დემოები ნამდვილ Angular 22-ზე მუშაობს, ჰერო კი სიგნალების ცოცხალ გრაფს აჩვენებს.</p>
+                    <ul class="chips" aria-label="თემები">
+                        <li>Components</li><li>Bindings</li><li>Signals</li><li>Control</li><li>Inputs</li><li>Directives</li><li>Services</li><li>Router</li><li>HTTP</li>
+                    </ul>
+                    <p class="card__meta">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>9 თემა</span>
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h4M8 10v4"/></svg>4 დონე</span>
+                    </p>
+                    <span class="card__go">გახსნა<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                </a>
+            </li>
         </ul>
     </main>
 
     <footer class="foot">
-        <p>სამივე საიტი build-ის გარეშე მუშაობს: უბრალოდ HTML, CSS და JavaScript. <a href="https://github.com/thothcher/sumup-helper">კოდი GitHub-ზე</a></p>
+        <p>ოთხივე საიტი build-ის გარეშე იხსნება: უბრალოდ HTML, CSS და JavaScript (Angular-ის დემოები წინასწარ არის აწყობილი). <a href="https://github.com/thothcher/sumup-helper">კოდი GitHub-ზე</a></p>
     </footer>
 </body>
 </html>

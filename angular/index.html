@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f7f6fb">
+    <title>Angular სიგნალი</title>
+    <meta name="description" content="Angular-ის 9 ძირითადი თემა ერთ ჯაჭვად: ცხოვრებისეული მაგალითები, ცოცხალი დემოები ნამდვილ Angular-ზე და პრაქტიკა თამაშად.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f0145a'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M12 1 22 4.5 20.5 18 12 23 3.5 18 2 4.5Z' fill='url(%23g)'/%3E%3Cpath d='M12 5 7 17h2l1-2.6h4L15 17h2Zm-1.3 7.6L12 9.2l1.3 3.4Z' fill='white'/%3E%3C/svg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/theme.css">
+
+    <!-- the real Angular demos: compiled from demos-src/ into one bundle -->
+    <script type="module" src="ng/main.js"></script>
+
+    <!-- order matters: helpers → data → features → main -->
+    <script src="src/icons.js" defer></script>
+    <script src="src/helpers.js" defer></script>
+    <script src="src/demos.js" defer></script>
+    <script src="src/data/topics.js" defer></script>
+    <script src="src/data/quiz.js" defer></script>
+    <script src="src/data/practice.js" defer></script>
+    <script src="src/data/puzzles.js" defer></script>
+    <script src="src/data/game.js" defer></script>
+    <script src="src/topics.js" defer></script>
+    <script src="src/game.js" defer></script>
+    <script src="src/levels.js" defer></script>
+    <script src="src/screen.js" defer></script>
+    <script src="src/main.js" defer></script>
+</head>
+<body>
+    <div class="backdrop" aria-hidden="true">
+        <svg class="backdrop__waves" viewBox="0 0 1200 400" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="wave-grad" x1="0" x2="1"><stop offset="0" stop-color="#f0145a" stop-opacity=".35"/><stop offset=".5" stop-color="#c2187f" stop-opacity=".3"/><stop offset="1" stop-color="#7c3aed" stop-opacity=".35"/></linearGradient>
+            </defs>
+            <path d="M0 200 C150 120 300 280 450 200 S750 120 900 200 S1150 280 1200 200"/>
+            <path d="M0 240 C200 170 350 320 550 240 S850 160 1000 240 S1150 300 1200 250"/>
+            <path d="M0 150 C180 210 320 90 520 150 S820 220 980 150 S1140 100 1200 140"/>
+        </svg>
+    </div>
+
+    <nav class="nav" aria-label="ნავიგაცია">
+        <div class="nav__bar">
+            <a class="brand" href="#top">
+                <span class="brand__mark" data-icon="zap"></span>
+                <span class="brand__name">Angular სიგნალი</span>
+            </a>
+            <ol class="chain__list" id="chain" aria-label="თემების ჯაჭვი"></ol>
+        </div>
+    </nav>
+
+    <header class="hero" id="top">
+        <div class="hero__text">
+            <p class="eyebrow">Angular 22 · 9 თემა · 4 დონე</p>
+            <h1 class="hero__title">Angular <em>სიგნალი</em></h1>
+            <p class="hero__lead">კომპონენტებიდან სიგნალებამდე, DI-დან HTTP-მდე: ყოველი თემა სათბურის მაგალითზე და ცოცხალი დემოთი ნამდვილ Angular-ზე. ბოლოს თამაში: ოთხი დონე, სამი გული და სიგნალები.</p>
+            <ol class="howto" aria-label="როგორ ვისწავლოთ">
+                <li><span class="howto__no">1</span><span><b>გაიგე</b> ცხოვრებისეული მაგალითით</span></li>
+                <li><span class="howto__no">2</span><span><b>გაუშვი</b> ნამდვილი Angular კომპონენტი</span></li>
+                <li><span class="howto__no">3</span><span><b>ითამაშე</b>: შეაგროვე სიგნალები, არ დაკარგო გულები</span></li>
+            </ol>
+            <div class="hero__cta">
+                <a class="btn btn--primary" href="#components">დავიწყოთ <span data-icon="arrowDown"></span></a>
+                <a class="btn" href="#practice"><span data-icon="gamepad"></span> პირდაპირ თამაშზე</a>
+            </div>
+        </div>
+        <div class="hero__visual" id="screen"></div>
+    </header>
+
+    <main>
+        <div class="wrap">
+            <div class="topics" id="topics"></div>
+        </div>
+
+        <section class="practice" id="practice" aria-labelledby="practice-title">
+            <header class="practice__intro">
+                <p class="eyebrow">პრაქტიკა</p>
+                <h2 id="practice-title">ოთხი დონე, სამი გული</h2>
+                <p>ყოველი სწორი პასუხი სიგნალებს მოგიტანს, ზედიზედ სამი კი კომბოს. სამ გულზე მეტი არ გაქვს, ასე რომ ფრთხილად.</p>
+            </header>
+            <div class="game" id="game"></div>
+        </section>
+    </main>
+
+    <footer class="foot">
+        <p>დემოები ნამდვილ Angular 22-ზე მუშაობს: Angular Elements, zoneless, წყარო demos-src/-შია.</p>
+    </footer>
+</body>
+</html>
