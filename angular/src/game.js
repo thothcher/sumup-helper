@@ -14,6 +14,11 @@
      Game.progress(done, total) the thin bar under the HUD
      Game.complete()            the level is over: splash, then the next one
      Game.onKey                 the level's keyboard handler while the window is on screen
+     Game.picked()              the topics in play (a Set of topic ids)
+
+   The topic drawer (a tab on the window's side, a chip in the bar on phones)
+   picks which topics the questions come from. A level with no questions
+   for those topics is skipped.
    ========================================================= */
 
 const HEARTS = 3;
@@ -32,7 +37,9 @@ const Game = (() => {
         assistGiven: false,
         streak: 0,
         best: 0,
+        started: false,     // a level was started since the last restart
         finished: false,
+        picked: new Set(),  // topic ids in play
     };
     let root;
     let stage;
@@ -58,14 +65,58 @@ const Game = (() => {
         try { localStorage.setItem(BEST_KEY, String(value)); } catch { /* ignore */ }
     }
 
+    /* ---------- topics in play ---------- */
+
+    const TOPICS_KEY = `${STORAGE_PREFIX}-topics`;
+    const allTopics = () => TOPICS.map(t => t.id);
+    const isFull = (picked = state.picked) => picked.size === TOPICS.length;
+    const sameSet = (a, b) => a.size === b.size && [...a].every(id => b.has(id));
+
+    /** The first level from `from` on that has questions for these topics (−1: none). */
+    const nextLevel = (from, picked = state.picked) => LEVELS.findIndex((l, i) => i >= from && l.size(picked) > 0);
+
+    function loadPicked() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(TOPICS_KEY));
+            const ids = Array.isArray(saved) ? saved.filter(id => allTopics().includes(id)) : [];
+            if (ids.length && nextLevel(0, new Set(ids)) >= 0) return new Set(ids);
+        } catch { /* ignore */ }
+        return new Set(allTopics());
+    }
+    function savePicked() {
+        try {
+            // all topics is the default, so a topic added later joins in by itself
+            if (isFull()) localStorage.removeItem(TOPICS_KEY);
+            else localStorage.setItem(TOPICS_KEY, JSON.stringify([...state.picked]));
+        } catch { /* ignore */ }
+    }
+
+    /** "All 8 topics" or "3 of 8: State, Lists, Effect". */
+    function topicSummary() {
+        if (isFull()) return `ყველა თემა (${TOPICS.length})`;
+        const names = TOPICS.filter(t => state.picked.has(t.id)).map(t => t.label);
+        const more = names.length > 3 ? ` +${names.length - 3}` : '';
+        return `${names.length} თემა ${TOPICS.length}-დან: ${names.slice(0, 3).join(', ')}${more}`;
+    }
+
     /* ---------- HUD ---------- */
 
     function renderLevels() {
         $$('.level', root).forEach((li, i) => {
-            const done = state.finished || i < state.level;
+            const off = LEVELS[i].size() === 0;
+            const done = !off && (state.finished || i < state.level);
+            li.classList.toggle('is-off', off);
             li.classList.toggle('is-done', done);
-            li.classList.toggle('is-current', !state.finished && i === state.level);
-            li.querySelector('.level__no').innerHTML = done ? icon('check') : String(i + 1);
+            li.classList.toggle('is-current', !off && !state.finished && i === state.level);
+            li.querySelector('.level__no').innerHTML = done ? icon('check') : off ? '–' : String(i + 1);
+            li.title = off ? 'ამ თემებით ეს დონე გამოტოვდება' : '';
+        });
+    }
+
+    function renderPicked() {
+        $$('[data-topics-toggle]', root).forEach((btn) => {
+            btn.classList.toggle('is-filtered', !isFull());
+            $('[data-topic-count]', btn).textContent = `${state.picked.size}/${TOPICS.length}`;
         });
     }
 
@@ -406,6 +457,170 @@ const Game = (() => {
         disarmHelp = null;
     }
 
+    /* ---------- the topic drawer ---------- */
+
+    let drawer;
+    let staged = new Set();     // the drawer's choice, until it is applied
+    let opener = null;
+    let hideTimer = 0;
+
+    const isPicking = () => drawer.classList.contains('is-open');
+    const playing = () => (state.started && !state.finished) || state.coins > 0;
+
+    /** How many questions (of every level) touch this topic. */
+    const countFor = (id) => LEVELS.reduce((n, l) =>
+        n + l.items().filter(item => [].concat(l.topicsOf(item)).includes(id)).length, 0);
+
+    function drawerTemplate() {
+        return `
+            <div class="topic-drawer__scrim" data-close-topics></div>
+            <section class="topic-drawer__panel" role="dialog" aria-labelledby="topic-drawer-title">
+                <header class="topic-drawer__head">
+                    <div>
+                        <p class="topic-drawer__kicker">${icon('filter')}ფილტრი</p>
+                        <h3 class="topic-drawer__title" id="topic-drawer-title">რა შევიდეს თამაშში?</h3>
+                        <p class="topic-drawer__lead">მონიშნე თემები, რომლებიც უკვე გაიარე: კითხვები მხოლოდ მათზე იქნება.</p>
+                    </div>
+                    <button class="icon-btn" type="button" data-close-topics aria-label="დახურვა">${icon('x')}</button>
+                </header>
+                <div class="topic-drawer__body">
+                    <div class="topic-drawer__quick">
+                        <button class="btn btn--sm" type="button" data-pick="all">${icon('check')}ყველა</button>
+                        <button class="btn btn--sm btn--ghost" type="button" data-pick="none">გასუფთავება</button>
+                        <span class="topic-drawer__tally"></span>
+                    </div>
+                    <ul class="topic-picks" aria-label="თემები">
+                        ${TOPICS.map((t, i) => `
+                            <li style="--i: ${i}"><label class="topic-pick">
+                                <input type="checkbox" value="${t.id}">
+                                <span class="topic-pick__icon">${icon(t.icon)}</span>
+                                <span class="topic-pick__text"><b>${t.label}</b><small>${countFor(t.id)} კითხვა</small></span>
+                                <span class="topic-pick__box">${icon('check')}</span>
+                            </label></li>`).join('')}
+                    </ul>
+                    <div class="topic-plan">
+                        <p class="topic-plan__title">ასე გამოვა</p>
+                        <ol class="topic-plan__list"></ol>
+                    </div>
+                </div>
+                <footer class="topic-drawer__foot">
+                    <p class="topic-drawer__note" aria-live="polite"></p>
+                    <button class="btn btn--primary" type="button" data-apply-topics></button>
+                </footer>
+            </section>`;
+    }
+
+    /** Draws the drawer for the staged choice: ticks, the plan per level, the button. */
+    function syncDrawer() {
+        $$('.topic-pick input', drawer).forEach((box) => {
+            box.checked = staged.has(box.value);
+            box.closest('.topic-pick').classList.toggle('is-on', box.checked);
+        });
+        $('.topic-drawer__tally', drawer).textContent = `${staged.size} / ${TOPICS.length}`;
+        $('.topic-plan__list', drawer).innerHTML = LEVELS.map((l, i) => {
+            const n = l.size(staged);
+            const why = staged.size < (l.minTopics || 1) ? `${l.minTopics}+ თემა სჭირდება` : 'ამ თემებზე არ არის';
+            return `
+                <li class="${n ? '' : 'is-off'}">
+                    <span>${i + 1}. ${l.name}</span>
+                    ${n ? `<b>${n}</b><small>${l.unit}</small>` : `<small>${why}</small>`}
+                </li>`;
+        }).join('');
+
+        const total = LEVELS.reduce((sum, l) => sum + l.size(staged), 0);
+        const levels = LEVELS.filter(l => l.size(staged) > 0).length;
+        const btn = $('[data-apply-topics]', drawer);
+        const note = $('.topic-drawer__note', drawer);
+        const summary = `${total} კითხვა · ${levels} დონე`;
+        btn.disabled = !total;
+        if (!staged.size) {
+            btn.innerHTML = 'აირჩიე თემა';
+            note.textContent = 'ერთი თემა მაინც მონიშნე.';
+        } else if (!total) {
+            btn.innerHTML = 'კითხვები არ არის';
+            note.textContent = 'ამ თემებზე კითხვები ჯერ არ გვაქვს.';
+        } else if (sameSet(staged, state.picked)) {
+            btn.innerHTML = `${icon('check')}მზადაა`;
+            note.textContent = summary;
+        } else if (playing()) {
+            btn.innerHTML = `${icon('rotate')}თავიდან დაწყება`;
+            note.textContent = `${summary}. მიმდინარე თამაში და მონეტები განულდება.`;
+        } else {
+            btn.innerHTML = `${icon('play')}გამოყენება`;
+            note.textContent = summary;
+        }
+    }
+
+    function openTopics(from) {
+        if (isPicking()) return closeTopics();
+        clearTimeout(hideTimer);
+        opener = from;
+        staged = new Set(state.picked);
+        syncDrawer();
+        drawer.style.setProperty('--top', `${$('.game__bar', root).offsetHeight}px`);
+        drawer.hidden = false;
+        void drawer.offsetWidth;
+        drawer.classList.add('is-open');
+        root.classList.add('is-picking');
+        $$('[data-topics-toggle]', root).forEach(b => b.setAttribute('aria-expanded', 'true'));
+        $$('.game__hud, .game__progress, .game__stage', root).forEach((el) => { el.inert = true; });
+        if (root.getBoundingClientRect().top < 0) {
+            root.scrollIntoView({ block: 'start', behavior: prefersReducedMotion.matches ? 'auto' : 'smooth' });
+        }
+        $('.topic-pick input', drawer).focus({ preventScroll: true });
+    }
+
+    function closeTopics({ focus = true } = {}) {
+        if (!isPicking()) return;
+        drawer.classList.remove('is-open');
+        root.classList.remove('is-picking');
+        $$('[data-topics-toggle]', root).forEach(b => b.setAttribute('aria-expanded', 'false'));
+        $$('.game__hud, .game__progress, .game__stage', root).forEach((el) => { el.inert = false; });
+        hideTimer = setTimeout(() => { drawer.hidden = true; }, prefersReducedMotion.matches ? 0 : 400);
+        if (!focus) return;
+        // back to whatever opened it, or to the toggle this screen size shows
+        const back = opener?.isConnected && opener.offsetParent ? opener
+            : $$('[data-topics-toggle]', root).find(b => b.offsetParent);
+        back?.focus({ preventScroll: true });
+    }
+
+    function applyTopics() {
+        if (sameSet(staged, state.picked)) return closeTopics();
+        state.picked = new Set(staged);
+        savePicked();
+        renderPicked();
+        closeTopics({ focus: false });
+        restart();
+        setMood('happy');
+        say(pickLine(GAME_TEXT.picked || ['ახალი თემები, ახალი თამაში!']), 3200);
+        $('[data-go]', stage)?.focus({ preventScroll: true });
+    }
+
+    function initDrawer() {
+        drawer = $('.topic-drawer', root);
+        drawer.innerHTML = drawerTemplate();
+        root.addEventListener('click', (e) => {
+            const from = e.target.closest('[data-topics]');
+            if (from) openTopics(from);
+        });
+        drawer.addEventListener('click', (e) => {
+            if (e.target.closest('[data-close-topics]')) return closeTopics();
+            const pick = e.target.closest('[data-pick]');
+            if (pick) {
+                staged = new Set(pick.dataset.pick === 'all' ? allTopics() : []);
+                return syncDrawer();
+            }
+            if (e.target.closest('[data-apply-topics]')) applyTopics();
+        });
+        drawer.addEventListener('change', (e) => {
+            const box = e.target.closest('.topic-pick input');
+            if (!box) return;
+            if (box.checked) staged.add(box.value);
+            else staged.delete(box.value);
+            syncDrawer();
+        });
+    }
+
     /* ---------- screens between levels ---------- */
 
     function resetStage() {
@@ -442,13 +657,16 @@ const Game = (() => {
                 ${done ? confetti(26) : ''}
                 ${done ? `<p class="splash__done">${icon('check')}<span>${done.name}: გავლილია · +${done.earned}</span></p>` : ''}
                 <p class="splash__kicker">${GAME_TEXT.levelWord}</p>
-                <p class="splash__num" data-num>${done ? state.level : state.level + 1}</p>
+                <p class="splash__num" data-num>${done ? done.from + 1 : state.level + 1}</p>
                 <h3 class="splash__title">${lvl.title}</h3>
                 <p class="splash__rules">${lvl.intro}</p>
-                <ul class="splash__facts">${lvl.facts().map(f => `<li>${f}</li>`).join('')}</ul>
+                <ul class="splash__facts">${[`${icon('listOrdered')}${lvl.size()} ${lvl.unit}`, ...lvl.facts()].map(f => `<li>${f}</li>`).join('')}</ul>
                 <div class="splash__actions">
                     <button class="btn btn--primary" type="button" data-go>${icon('play')}${done ? 'შემდეგი დონე' : 'დაწყება'}</button>
                 </div>
+                ${done ? '' : `
+                <p class="splash__topics">${icon('filter')}<span>${topicSummary()}</span>
+                    <button class="splash__change" type="button" data-topics>შეცვლა</button></p>`}
             </div>`;
         if (done) {
             const num = $('[data-num]', stage);
@@ -474,6 +692,7 @@ const Game = (() => {
         state.assists = 0;
         state.assistGiven = false;
         state.streak = 0;
+        state.started = true;
         renderLevels();
         renderHearts();
         setMood('idle');
@@ -488,17 +707,23 @@ const Game = (() => {
         const finished = level();
         const earned = state.levelEarned;
         progress(1, 1);
-        if (state.level === LEVELS.length - 1) return victory(finished, earned);
-        state.level++;
+        const next = nextLevel(state.level + 1);
+        if (next < 0) return victory(finished, earned);
+        const from = state.level;
+        state.level = next;
         state.hearts = HEARTS;
         setMood('party', 3200);
         say(pickLine(GAME_TEXT.levelUp), 3200);
-        splash({ done: { name: finished.name, earned } });
+        splash({ done: { name: finished.name, earned, from } });
     }
 
     function gameOver() {
         resetStage();
         const lost = state.levelEarned;
+        // with few topics a retry can only reshuffle the same questions
+        const again = level().pool(state.picked).length > level().size()
+            ? 'სცადე ისევ: კითხვები სხვა იქნება.'
+            : 'სცადე ისევ: ახლა უკვე იცი, სად იმალება მახე.';
         state.coins = state.levelStart;
         state.levelEarned = 0;
         showCoins(state.coins);
@@ -508,7 +733,7 @@ const Game = (() => {
                 <div class="splash__icon">${icon('heartCrack')}</div>
                 <p class="splash__kicker">${GAME_TEXT.overKicker}</p>
                 <h3 class="splash__title">${pickLine(GAME_TEXT.over)}</h3>
-                <p class="splash__rules">${lost ? `ამ დონეზე მოგროვებული ${lost} ${GAME_TEXT.coinName} იკარგება. ` : ''}სცადე ისევ: კითხვები სხვა იქნება.</p>
+                <p class="splash__rules">${lost ? `ამ დონეზე მოგროვებული ${lost} ${GAME_TEXT.coinName} იკარგება. ` : ''}${again}</p>
                 <div class="splash__actions">
                     <button class="btn btn--primary" type="button" data-retry>${icon('rotate')}დონის თავიდან დაწყება</button>
                     <button class="btn" type="button" data-restart>მთლიანად თავიდან</button>
@@ -532,17 +757,22 @@ const Game = (() => {
         const max = maxCoins();
         const ratio = state.coins / max;
         const rank = GAME_TEXT.ranks.find(([min]) => ratio >= min)[1];
-        const record = state.coins > state.best;
+        // a record only counts on the full game: fewer topics, fewer coins to win
+        const full = isFull();
+        const record = full && state.coins > state.best;
         if (record) saveBest(state.coins);
         renderBest();
+        const allLevels = LEVELS.every(l => l.size() > 0);
+        const best = !full ? `${state.picked.size} თემა ${TOPICS.length}-დან: რეკორდი მხოლოდ ყველა თემით ითვლება`
+            : record ? 'ახალი რეკორდია!' : `რეკორდი: ${state.best}`;
         stage.innerHTML = `
             <div class="splash splash--win">
                 ${confetti(70)}
                 <p class="splash__done">${icon('check')}<span>${finished.name}: გავლილია · +${earned}</span></p>
-                <p class="splash__kicker">${GAME_TEXT.winKicker}</p>
+                <p class="splash__kicker">${allLevels ? GAME_TEXT.winKicker : 'ყველა არჩეული დონე გავლილია'}</p>
                 <p class="splash__score"><span class="coin" aria-hidden="true"></span><span class="splash__num">${state.coins}</span></p>
                 <h3 class="splash__title">${icon('crown')} ${rank}</h3>
-                <p class="splash__rules">${record ? 'ახალი რეკორდია!' : `რეკორდი: ${state.best}`} · მაქსიმუმი: ${max} ${GAME_TEXT.coinName}</p>
+                <p class="splash__rules">${best} · მაქსიმუმი: ${max} ${GAME_TEXT.coinName}</p>
                 <div class="splash__actions">
                     <button class="btn btn--primary" type="button" data-restart>${icon('rotate')}თავიდან თამაში</button>
                 </div>
@@ -553,7 +783,7 @@ const Game = (() => {
     }
 
     function restart() {
-        Object.assign(state, { level: 0, coins: 0, levelStart: 0, levelEarned: 0, hearts: HEARTS, assists: 0, assistGiven: false, streak: 0, finished: false });
+        Object.assign(state, { level: nextLevel(0), coins: 0, levelStart: 0, levelEarned: 0, hearts: HEARTS, assists: 0, assistGiven: false, streak: 0, started: false, finished: false });
         showCoins(0);
         setMood('idle');
         splash();
@@ -564,9 +794,20 @@ const Game = (() => {
     function init() {
         root = $('#game');
         state.best = loadBest();
+        state.picked = loadPicked();
+        state.level = nextLevel(0);
+        const toggle = 'data-topics data-topics-toggle aria-expanded="false" aria-controls="game-topics"';
         root.innerHTML = `
+            <div class="topic-rail">
+                <button class="topic-tab" type="button" ${toggle} title="რომელი თემები შევიდეს თამაშში?">
+                    <span class="topic-tab__arrow">${icon('chevronRight')}</span>
+                    <span class="topic-tab__label">თემები</span>
+                    <b class="topic-tab__count" data-topic-count></b>
+                </button>
+            </div>
             <div class="game__bar">
                 <span class="game__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <button class="topic-chip" type="button" ${toggle}>${icon('filter')}<span>თემები</span><b data-topic-count></b>${icon('chevronRight', 'topic-chip__arrow')}</button>
                 <span class="game__title">${GAME_TEXT.windowTitle}</span>
                 <span class="game__best"></span>
                 <button class="icon-btn" type="button" data-restart-game title="თამაში თავიდან" aria-label="თამაში თავიდან">${icon('rotate')}</button>
@@ -587,9 +828,12 @@ const Game = (() => {
                 </div>
             </div>
             <div class="game__progress" aria-hidden="true"><span></span></div>
-            <div class="game__stage"></div>`;
+            <div class="game__stage"></div>
+            <div class="topic-drawer" id="game-topics" hidden></div>`;
         stage = $('.game__stage', root);
         renderBest();
+        renderPicked();
+        initDrawer();
         setMood('idle');
 
         $('[data-restart-game]', root).addEventListener('click', restart);
@@ -600,6 +844,14 @@ const Game = (() => {
 
         new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }).observe(root);
         document.addEventListener('keydown', (e) => {
+            if (isPicking()) {
+                // the drawer is open: the level's keys (1, 2… A, B…) wait
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeTopics();
+                }
+                return;
+            }
             if (!visible || !Game.onKey || e.ctrlKey || e.metaKey || e.altKey) return;
             if (e.target.matches('input, textarea, select')) return;
             Game.onKey(e);
@@ -608,5 +860,5 @@ const Game = (() => {
         splash();
     }
 
-    return { init, reward, penalty, skip, assist, arm, disarm, progress, complete, onKey: null };
+    return { init, reward, penalty, skip, assist, arm, disarm, progress, complete, picked: () => state.picked, onKey: null };
 })();

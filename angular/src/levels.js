@@ -3,7 +3,8 @@
 /* =========================================================
    LEVELS — the four practice levels inside the game window.
    Each start(stage) renders into the window and reports to Game.
-   The questions come from data/quiz.js, data/practice.js and data/puzzles.js.
+   The questions come from data/quiz.js, data/practice.js and data/puzzles.js,
+   filtered by the topics the player picked (Game.picked()).
    ========================================================= */
 
 const COINS = { quiz: 10, bugs: 20, bugsHint: 10, order: [30, 20, 10], output: 15 };
@@ -21,7 +22,10 @@ const LEVELS = [
         intro: 'გაჩვენებ კოდს, შენ კი აირჩიე თემა, რომელსაც ის ეკუთვნის. ციფრებით (1, 2…) სწრაფად უპასუხებ.',
         count: 8,
         maxPer: COINS.quiz,
-        size() { return Math.min(this.count, QUIZ.length); },
+        unit: 'კითხვა',
+        items: () => QUIZ,
+        topicsOf: q => q.answer,
+        minTopics: 2,     // "which topic?" with a single topic would answer itself
         facts: () => [coinFact(`+${COINS.quiz} სწორზე`), heartFact(), comboFact()],
         start: quizLevel,
     },
@@ -32,7 +36,9 @@ const LEVELS = [
         intro: 'კოდი ისე არ მუშაობს, როგორც უნდა. დააჭირე ხაზს, რომელიც მას აფუჭებს.',
         count: 6,
         maxPer: COINS.bugs,
-        size() { return Math.min(this.count, BUGS.length); },
+        unit: 'ბაგი',
+        items: () => BUGS,
+        topicsOf: b => b.topic,
         facts: () => [coinFact(`+${COINS.bugs}, მინიშნებით +${COINS.bugsHint}`), heartFact(), comboFact()],
         start: bugsLevel,
     },
@@ -44,7 +50,9 @@ const LEVELS = [
         count: 4,
         maxPer: COINS.order[0],
         safe: true,
-        size() { return Math.min(this.count, PUZZLES.length); },
+        unit: 'ამოცანა',
+        items: () => PUZZLES,
+        topicsOf: p => p.topics,
         facts: () => [coinFact(`პირველი ცდით +${COINS.order[0]}, მერე +${COINS.order[1]} და +${COINS.order[2]}`), `${icon('shieldCheck')}გულები ამ დონეზე დაცულია`],
         start: orderLevel,
     },
@@ -55,20 +63,35 @@ const LEVELS = [
         intro: 'წაიკითხე კოდი და გამოიცანი შედეგი. პასუხი ასოებითაც შეგიძლია: A, B, C, D.',
         count: 8,
         maxPer: COINS.output,
-        size() { return Math.min(this.count, OUTPUTS.length); },
+        unit: 'კითხვა',
+        items: () => OUTPUTS,
+        topicsOf: o => o.topic,
         facts: () => [coinFact(`+${COINS.output} სწორზე`), heartFact(), comboFact()],
         start: outputLevel,
     },
 ];
 
-const sizeOf = (id) => LEVELS.find(l => l.id === id).size();
+/* Which questions are in play: a question counts when every topic it touches was picked.
+   pool(picked) is the level's whole choice, size(picked) how many one round asks. */
+LEVELS.forEach((lvl) => {
+    lvl.pool = (picked) => (picked.size < (lvl.minTopics || 1) ? []
+        : lvl.items().filter(item => [].concat(lvl.topicsOf(item)).every(id => picked.has(id))));
+    lvl.size = (picked = Game.picked()) => Math.min(lvl.count, lvl.pool(picked).length);
+});
+
+/** This round's questions for a level: shuffled, from the picked topics. */
+const drawFor = (id) => {
+    const lvl = LEVELS.find(l => l.id === id);
+    return shuffle(lvl.pool(Game.picked())).slice(0, lvl.size());
+};
 
 /* =========================================================
    1. Quiz — which topic does this code belong to?
    ========================================================= */
 
 function quizLevel(stage) {
-    const questions = shuffle(QUIZ).slice(0, sizeOf('quiz'));
+    const questions = drawFor('quiz');
+    const choices = TOPICS.filter(t => Game.picked().has(t.id));   // only the picked topics are answers
     let index = 0;
     let answered = false;
 
@@ -80,7 +103,7 @@ function quizLevel(stage) {
             <h3 class="task-title">ეს კოდი რომელ თემას ეკუთვნის?</h3>
             ${codeBlock(q.code)}
             <div class="options" role="group" aria-label="პასუხის ვარიანტები">
-                ${TOPICS.map((t, i) => `
+                ${choices.map((t, i) => `
                     <button class="option" type="button" data-answer="${t.id}">
                         <span class="option__key">${i + 1}</span>${t.label}
                     </button>`).join('')}
@@ -132,9 +155,9 @@ function quizLevel(stage) {
     };
     Game.onKey = (e) => {
         const n = Number(e.key);
-        if (!answered && n >= 1 && n <= TOPICS.length) {
+        if (!answered && n >= 1 && n <= choices.length) {
             e.preventDefault();
-            answer(TOPICS[n - 1].id);
+            answer(choices[n - 1].id);
         } else if (answered && e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
             e.preventDefault();
             next();
@@ -148,7 +171,7 @@ function quizLevel(stage) {
    ========================================================= */
 
 function bugsLevel(stage) {
-    const bugs = shuffle(BUGS).slice(0, sizeOf('bugs'));
+    const bugs = drawFor('bugs');
     let index = 0;
     let solved = false;
     let hinted = false;
@@ -339,7 +362,7 @@ function swapNote(p) {
 }
 
 function orderLevel(stage) {
-    const puzzles = shuffle(PUZZLES).slice(0, sizeOf('order'));
+    const puzzles = drawFor('order');
     let index = 0;
     let fails = 0;
     let solved = false;
@@ -540,7 +563,7 @@ function orderLevel(stage) {
    ========================================================= */
 
 function outputLevel(stage) {
-    const questions = shuffle(OUTPUTS).slice(0, sizeOf('output'));
+    const questions = drawFor('output');
     let index = 0;
     let answered = false;
 

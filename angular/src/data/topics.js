@@ -306,11 +306,11 @@ export class PlantRowLegacy {
   host: {
     '(mouseenter)': 'on.set(true)',
     '(mouseleave)': 'on.set(false)',
-    '[style.background]': "on() ? color() : null",
+    '[style.background]': "on() ? color() || 'gold' : null",
   },
 })
 export class Highlight {
-  color = input('gold', { alias: 'appHighlight' });
+  color = input('', { alias: 'appHighlight' }); // <li appHighlight> → ''
   on = signal(false);
 }
 

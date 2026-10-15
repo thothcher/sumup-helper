@@ -362,3 +362,11 @@
 @media (max-width: 720px) {
     .backdrop__waves { height: 50vh; }
 }
+
+/* ============ Topic drawer: the signal gradient ============ */
+.topic-tab__arrow,
+.topic-pick.is-on .topic-pick__icon,
+.topic-pick.is-on .topic-pick__box { background: var(--grad); }
+.topic-pick.is-on .topic-pick__box { border-color: transparent; }
+.topic-drawer { --scrim: rgba(18, 13, 31, .26); }
+.topic-plan__list b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
