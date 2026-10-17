@@ -29,6 +29,7 @@ const HELP = { mercyMs: 15 * 1000 };   // the last help: think this long and eve
 const Game = (() => {
     const state = {
         level: 0,
+        from: 0,            // the level this run started from (the first screen lets you pick)
         coins: 0,
         levelStart: 0,      // coins when the level began (given back on a retry)
         levelEarned: 0,
@@ -102,14 +103,17 @@ const Game = (() => {
     /* ---------- HUD ---------- */
 
     function renderLevels() {
+        const base = state.started ? state.from : state.level;     // levels before it were left out on purpose
         $$('.level', root).forEach((li, i) => {
             const off = LEVELS[i].size() === 0;
-            const done = !off && (state.finished || i < state.level);
+            const skipped = !off && i < base;
+            const done = !off && !skipped && (state.finished || i < state.level);
             li.classList.toggle('is-off', off);
+            li.classList.toggle('is-skipped', skipped);
             li.classList.toggle('is-done', done);
             li.classList.toggle('is-current', !off && !state.finished && i === state.level);
             li.querySelector('.level__no').innerHTML = done ? icon('check') : off ? '–' : String(i + 1);
-            li.title = off ? 'ამ თემებით ეს დონე გამოტოვდება' : '';
+            li.title = off ? 'ამ თემებით ეს დონე გამოტოვდება' : skipped ? 'ეს დონე გამოტოვე' : LEVELS[i].name;
         });
     }
 
@@ -364,9 +368,14 @@ const Game = (() => {
                 on(el, 'focus', () => morph(el));
             });
         } else if (mode === 'mercy') {
-            const end = Date.now() + HELP.mercyMs;
+            let end = Date.now() + HELP.mercyMs;
+            let last = Date.now();
             const timer = setInterval(() => {
-                const left = end - Date.now();
+                const now = Date.now();
+                // time spent on a coffee break is not thinking time
+                if (document.documentElement.classList.contains('is-break')) end += now - last;
+                last = now;
+                const left = end - now;
                 if (left > 0) return;
                 clearInterval(timer);
                 els.forEach((el, i) => setTimeout(() => morph(el), i * 150));
@@ -646,6 +655,16 @@ const Game = (() => {
         }).join('')}</div>`;
     }
 
+    /** Only on the very first screen: begin at another level, to show it in class or to practise it. */
+    function jumpTemplate() {
+        const open = LEVELS.map((l, i) => ({ l, i })).filter(({ l }) => l.size() > 0);
+        if (open.length < 2) return '';
+        return `
+            <p class="splash__jump">${icon('flag')}<span>${bi('დაიწყე დონიდან:', 'Start from level:', 'bi--line')}</span>
+                ${open.map(({ l, i }) => `<button class="splash__lvl${i === state.level ? ' is-on' : ''}" type="button" data-jump="${i}" title="${l.name}" aria-pressed="${i === state.level}">${i + 1}</button>`).join('')}
+            </p>`;
+    }
+
     function splash({ done } = {}) {
         resetStage();
         const lvl = level();
@@ -667,6 +686,7 @@ const Game = (() => {
                 ${done ? '' : `
                 <p class="splash__topics">${icon('filter')}<span>${topicSummary()}</span>
                     <button class="splash__change" type="button" data-topics>შეცვლა</button></p>`}
+                ${done || state.started || state.coins ? '' : jumpTemplate()}
             </div>`;
         if (done) {
             const num = $('[data-num]', stage);
@@ -675,7 +695,14 @@ const Game = (() => {
                 setTimeout(() => { num.textContent = state.level + 1; }, 330);
             }, 700);
         }
-        stage.onclick = (e) => { if (e.target.closest('[data-go]')) startLevel(); };
+        stage.onclick = (e) => {
+            const jump = e.target.closest('[data-jump]');
+            if (jump) {
+                state.level = Number(jump.dataset.jump);
+                return splash();
+            }
+            if (e.target.closest('[data-go]')) startLevel();
+        };
         Game.onKey = (e) => {
             if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
                 e.preventDefault();
@@ -692,6 +719,7 @@ const Game = (() => {
         state.assists = 0;
         state.assistGiven = false;
         state.streak = 0;
+        if (!state.started) state.from = state.level;
         state.started = true;
         renderLevels();
         renderHearts();
@@ -745,8 +773,8 @@ const Game = (() => {
         };
     }
 
-    function maxCoins() {
-        return LEVELS.reduce((sum, l) => sum + l.size() * l.maxPer + Math.floor(l.size() / COMBO_EVERY) * COMBO_BONUS, 0);
+    function maxCoins(from = 0) {
+        return LEVELS.slice(from).reduce((sum, l) => sum + l.size() * l.maxPer + Math.floor(l.size() / COMBO_EVERY) * COMBO_BONUS, 0);
     }
 
     function victory(finished, earned) {
@@ -754,17 +782,19 @@ const Game = (() => {
         state.finished = true;
         renderLevels();
         renderHearts();
-        const max = maxCoins();
+        const max = maxCoins(state.from);
         const ratio = state.coins / max;
         const rank = GAME_TEXT.ranks.find(([min]) => ratio >= min)[1];
         // a record only counts on the full game: fewer topics, fewer coins to win
         const full = isFull();
-        const record = full && state.coins > state.best;
+        const whole = state.from === nextLevel(0);      // began with the first level
+        const record = full && whole && state.coins > state.best;
         if (record) saveBest(state.coins);
         renderBest();
         const allLevels = LEVELS.every(l => l.size() > 0);
         const best = !full ? `${state.picked.size} თემა ${TOPICS.length}-დან: რეკორდი მხოლოდ ყველა თემით ითვლება`
-            : record ? 'ახალი რეკორდია!' : `რეკორდი: ${state.best}`;
+            : !whole ? 'რეკორდი მხოლოდ პირველი დონიდან დაწყებისას ითვლება'
+                : record ? 'ახალი რეკორდია!' : `რეკორდი: ${state.best}`;
         stage.innerHTML = `
             <div class="splash splash--win">
                 ${confetti(70)}
@@ -783,7 +813,7 @@ const Game = (() => {
     }
 
     function restart() {
-        Object.assign(state, { level: nextLevel(0), coins: 0, levelStart: 0, levelEarned: 0, hearts: HEARTS, assists: 0, assistGiven: false, streak: 0, started: false, finished: false });
+        Object.assign(state, { level: nextLevel(0), from: nextLevel(0), coins: 0, levelStart: 0, levelEarned: 0, hearts: HEARTS, assists: 0, assistGiven: false, streak: 0, started: false, finished: false });
         showCoins(0);
         setMood('idle');
         splash();

@@ -14,6 +14,8 @@
 
     <link rel="stylesheet" href="basics.css">
     <link rel="stylesheet" href="game.css">
+    <link rel="stylesheet" href="break.css">
+    <link rel="stylesheet" href="project.css">
 
     <!-- order matters: data → helpers → features → main -->
     <script src="src/icons.js" defer></script>
@@ -24,11 +26,16 @@
     <script src="src/data/puzzles.js" defer></script>
     <script src="src/data/seasons.js" defer></script>
     <script src="src/data/game.js" defer></script>
+    <script src="src/data/radio.js" defer></script>
+    <script src="src/data/projects.js" defer></script>
+    <script src="src/lang.js" defer></script>
     <script src="src/topics.js" defer></script>
     <script src="src/game.js" defer></script>
     <script src="src/levels.js" defer></script>
+    <script src="src/level-project.js" defer></script>
     <script src="src/leaves.js" defer></script>
     <script src="src/music.js" defer></script>
+    <script src="src/break.js" defer></script>
     <script src="src/seasons.js" defer></script>
     <script src="src/main.js" defer></script>
 </head>
@@ -70,6 +77,10 @@
                 </button>
                 <button class="season-btn" id="season-btn" type="button" aria-expanded="false" aria-controls="season-menu" aria-label="სეზონი და მუსიკა"></button>
                 <div class="season-menu" id="season-menu" hidden></div>
+                <button class="coffee-btn" id="coffee-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="შესვენება" title="შესვენება · Coffee break">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/></svg>
+                    <span class="coffee-btn__time" hidden></span>
+                </button>
             </div>
         </div>
     </nav>
@@ -80,7 +91,7 @@
         <section class="practice" id="practice" aria-labelledby="practice-title">
             <header class="practice__intro">
                 <p class="eyebrow">პრაქტიკა</p>
-                <h2 id="practice-title">ოთხი დონე, სამი გული</h2>
+                <h2 id="practice-title">ხუთი დონე, სამი გული</h2>
                 <p>ყოველი სწორი პასუხი მონეტებს მოგიტანს, ზედიზედ სამი კი კომბოს. სამ გულზე მეტი არ გაქვს: ქარი ძლიერია.</p>
             </header>
             <div class="game" id="game"></div>

@@ -224,7 +224,7 @@ a { color: var(--accent-text); }
     display: grid;
     place-items: center;
     border: 0;
-    border-radius: 0 var(--radius) var(--radius) 0;
+    border-radius: 0;
     background: none;
     color: var(--leaf-yellow);
     cursor: pointer;
@@ -232,6 +232,30 @@ a { color: var(--accent-text); }
 }
 .season-btn .icon { width: 18px; height: 18px; }
 .season-btn:hover, .season-btn[aria-expanded="true"] { background: rgba(255, 255, 255, .07); }
+
+/* the coffee break, last in the pill. While a break runs it shows the time left (break.js). */
+.coffee-btn {
+    min-width: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 11px;
+    border: 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    background: none;
+    box-shadow: inset 1px 0 0 var(--line);
+    color: #e3ac70;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+}
+.coffee-btn .icon { width: 18px; height: 18px; }
+.coffee-btn:hover, .coffee-btn[aria-expanded="true"] { background: rgba(255, 255, 255, .07); }
+.coffee-btn__time { font: 600 13px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.coffee-btn__time[hidden] { display: none; }
+.coffee-btn.is-running { background: var(--leaf-yellow); color: #2a2208; }
+.coffee-btn.is-running:hover { background: #efd067; }
+.coffee-btn.is-over { background: var(--accent); color: #fff; animation: ring 1.4s ease-out infinite; }
 
 /* nearly opaque: a backdrop blur can't reach outside the blurred header */
 .season-menu {
@@ -1438,6 +1462,34 @@ kbd {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: none; }
 }
+
+/* ============ Bilingual lines ============
+   Georgian first, the English translation under it (or beside it with .bi--line).
+   The EN button switches the English off: html.en-off (lang.js). */
+.bi { display: block; }
+.bi__en { display: block; margin-top: 2px; color: var(--muted); font-size: .86em; font-weight: 400; line-height: 1.4; }
+.bi--line { display: inline; }
+.bi--line .bi__en { display: inline; margin: 0 0 0 .4em; }
+.bi--line .bi__en::before { content: "·"; margin-right: .4em; opacity: .6; }
+.en-off .bi__en { display: none; }
+
+.lang-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, .06);
+    color: var(--muted);
+    font: 700 11px/1 var(--mono);
+    letter-spacing: .06em;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+}
+.lang-btn .icon { width: 13px; height: 13px; }
+.lang-btn:hover { background: rgba(255, 255, 255, .12); color: var(--text-strong); }
+.lang-btn[aria-pressed="true"] { background: var(--tint); color: var(--accent-text); }
 
 /* ============ Footer ============ */
 .foot {

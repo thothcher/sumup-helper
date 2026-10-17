@@ -72,12 +72,16 @@ const LEVELS = [
 ];
 
 /* Which questions are in play: a question counts when every topic it touches was picked.
-   pool(picked) is the level's whole choice, size(picked) how many one round asks. */
-LEVELS.forEach((lvl) => {
+   pool(picked) is the level's whole choice, size(picked) how many one round asks.
+   A level may add fits(item, picked) to turn a question down for these topics.
+   A level that lives in its own file (level-project.js) joins with LEVELS.push(wireLevel({ … })). */
+function wireLevel(lvl) {
     lvl.pool = (picked) => (picked.size < (lvl.minTopics || 1) ? []
-        : lvl.items().filter(item => [].concat(lvl.topicsOf(item)).every(id => picked.has(id))));
+        : lvl.items().filter(item => [].concat(lvl.topicsOf(item)).every(id => picked.has(id)) && (!lvl.fits || lvl.fits(item, picked))));
     lvl.size = (picked = Game.picked()) => Math.min(lvl.count, lvl.pool(picked).length);
-});
+    return lvl;
+}
+LEVELS.forEach(wireLevel);
 
 /** This round's questions for a level: shuffled, from the picked topics. */
 const drawFor = (id) => {

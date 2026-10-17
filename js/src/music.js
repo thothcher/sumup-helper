@@ -34,6 +34,7 @@ function initMusic(startSeason) {
     let fadeId = null;
     let wanted = false;         // intent: survives the fade-out delay
     let fadeInOnPlay = false;   // a song is loading; fade it in once it really plays
+    let held = false;           // the coffee break borrowed the speakers (break.js)
 
     const storage = {
         get() { try { return localStorage.getItem(STORAGE_KEY); } catch { return null; } },
@@ -83,6 +84,8 @@ function initMusic(startSeason) {
 
     function play() {
         if (!player) return;
+        held = false;                 // somebody wants the song itself: the break must not hand it back later
+        document.dispatchEvent(new CustomEvent('music:play'));   // the break's radio makes room
         wanted = true;
         render(true);
         if (player.getPlayerState() === YT.PlayerState.PLAYING) {
@@ -114,6 +117,8 @@ function initMusic(startSeason) {
         showTrack();
         storage.set('on');
         const load = () => {
+            held = false;
+            document.dispatchEvent(new CustomEvent('music:play'));
             volume = 0;
             player.setVolume(0);
             wanted = true;
@@ -124,6 +129,19 @@ function initMusic(startSeason) {
         if (wanted && volume > 0) fadeTo(0, 700, load);
         else load();
     }
+
+    /* the coffee break plays its own radio: the song steps aside (without being saved as "off")
+       and comes back when the break ends, unless somebody started it again meanwhile */
+    document.addEventListener('radio:play', () => {
+        if (!wanted || !player) return;
+        held = true;
+        pause();
+    });
+    document.addEventListener('radio:stop', () => {
+        if (!held) return;
+        held = false;
+        play();
+    });
 
     function startOnFirstInteraction() {
         const events = ['pointerdown', 'keydown', 'touchend'];
